@@ -1,0 +1,3 @@
+NAME HELLO WINDOWCOMPAT ;module name
+PROTMODE ;protected mode only
+STACKSIZE 10240

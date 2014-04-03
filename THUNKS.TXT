@@ -1,0 +1,46 @@
+With OS/2 2.0 it is possible for a 32-bit program to call 16-bit functions or
+for a 16-bit program to call 32-bit functions.  I have created four example
+programs, simple HELLO programs, but the principles can be used for more
+complex applications.  Two 16 -> 32 examples are HEL1632.ASM and HEL1632A.ASM.
+Two 32 -> 16 examples are HEL3216.ASM and HEL3216A.ASM.  All are designed for
+Microsoft MASM 6.0 and are linked with LINK386.  The same HELLO.DEF is used for
+all these examples.  To assemble, use
+
+ML /c HEL3216.ASM (no debugging information), or
+ML /c /Zi HEL3216.ASM (to be able to run with IPMD debugger, included with
+   C Set 2)
+   
+To link a 32 -> 16 program,
+
+LINK386 HEL3216,,,C:\TOOLKT20\OS2LIB\OS2286,HELLO (no debugging information), or
+LINK386 /co HEL3216,,,C:\TOOLKT20\OS2LIB\OS2286,HELLO
+                          (to run with IPMD debugger)
+
+To link a 16 -> 32 program, I used C:\TOOLKT20\OS2386 instead of OS2286 but am
+not sure if it really makes any difference as the programs were written, since
+all OS/2 API calls were explicitly specified as to 16-bit or 32-bit version:
+DOS16WRITE or DOS32WRITE instead of DOSWRITE.  These commands may have to be
+modified depending on the names of the directories of the Developer's Toolkit,
+and of course, the actual program file name, if different from HEL3216, is used
+in place of HEL3216.
+
+Thunks are especially useful in 32-bit programs for calling KBD, MOU and VIO
+functions, which currently exist only in 16-bit forms.
+
+I used guidelines in OS/2 Technical Library Application Design Guide, pages
+3-13 to 3-19.  It is necessary to create a special thunk segment consistent
+with the API function being called.  Using variables to hold the API function
+address and the return point permits the same code to be used for many different
+32 -> 16 or 16 -> 32 function calls.  An EXTERN definition for a NEAR32 API
+function must be made within a FLAT code segment, while an EXTERN definition for
+a FAR16 API function must be made outside of any segment.  Segment order can be
+of critical importance.  In the 16 -> 32 thunk programs, the 32-bit data segment
+had to come before the 16-bit data segment to produce the correct FLAT selector.
+To convert between 16-bit selector:offset addresses and 32-bit flat addresses,
+use DOS16FLATTOSEL or DOS16SELTOFLAT from a 16-bit segment, or DOS32FLATTOSEL
+or DOS32SELTOFLAT from a 32-bit segment. Either of these functions takes input
+parameter in EAX register and returns result in EAX register.  IPMD debugger,
+included with C Set 2, proved useful to me.  Apparently OS/2 2.0 operating
+system makes use of segment registers DS, ES and FS but not GS, thus leaving GS
+open to the programmer's use.  This can be useful in a thunking program, which
+would use both 16-bit and 32-bit data segments.
